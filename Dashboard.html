@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binance Symbol Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        #container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        #search-box {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        #dashboard {
+            font-size: 16px;
+        }
+        .dashboard-item {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <input type="text" id="search-box" placeholder="Search for a symbol...">
+        <div id="dashboard">
+            <div class="dashboard-item"><strong>Symbol:</strong> <span id="symbol"></span></div>
+            <div class="dashboard-item"><strong>Price:</strong> <span id="price"></span></div>
+            <div class="dashboard-item"><strong>24h High:</strong> <span id="highPrice"></span></div>
+            <div class="dashboard-item"><strong>24h Low:</strong> <span id="lowPrice"></span></div>
+            <div class="dashboard-item"><strong>24h Volume:</strong> <span id="volume"></span></div>
+        </div>
+    </div>
+
+    <script>
+        // Define the Binance API URLs
+        const BASE_URL = 'https://api.binance.com/api/v3/';
+        const EXCHANGE_INFO_URL = `${BASE_URL}exchangeInfo`;
+        const TICKER_24HR_URL = `${BASE_URL}ticker/24hr`;
+
+        // Get the search box and dashboard elements
+        const searchBox = document.getElementById('search-box');
+        const symbolElem = document.getElementById('symbol');
+        const priceElem = document.getElementById('price');
+        const highPriceElem = document.getElementById('highPrice');
+        const lowPriceElem = document.getElementById('lowPrice');
+        const volumeElem = document.getElementById('volume');
+
+        // Fetch symbols from Binance API
+        async function fetchSymbols() {
+            const response = await fetch(EXCHANGE_INFO_URL);
+            const data = await response.json();
+            return data.symbols.map(symbol => symbol.symbol);
+        }
+
+        // Fetch ticker data from Binance API
+        async function fetchTicker(symbol) {
+            const response = await fetch(`${TICKER_24HR_URL}?symbol=${symbol}`);
+            const data = await response.json();
+            return data;
+        }
+
+        // Populate the dashboard with symbol data
+        async function updateDashboard(symbol) {
+            if (!symbol) return;
+
+            const tickerData = await fetchTicker(symbol);
+
+            symbolElem.textContent = tickerData.symbol;
+            priceElem.textContent = `${tickerData.lastPrice} ${tickerData.symbol.replace(/^[A-Z]+/, '')}`;
+            highPriceElem.textContent = `${tickerData.highPrice} ${tickerData.symbol.replace(/^[A-Z]+/, '')}`;
+            lowPriceElem.textContent = `${tickerData.lowPrice} ${tickerData.symbol.replace(/^[A-Z]+/, '')}`;
+            volumeElem.textContent = `${tickerData.volume} ${tickerData.symbol.replace(/^[A-Z]+/, '')}`;
+        }
+
+        // Handle search box input
+        searchBox.addEventListener('input', async (event) => {
+            const query = event.target.value.toUpperCase();
+            const symbols = await fetchSymbols();
+
+            if (symbols.includes(query)) {
+                updateDashboard(query);
+            }
+        });
+
+        // Initial fetch to populate symbol list
+        fetchSymbols();
+    </script>
+</body>
+</html>
